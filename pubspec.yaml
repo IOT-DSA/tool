@@ -1,0 +1,16 @@
+name: dsa_tool
+description: Tools for Working with DSA
+dependencies:
+  dslink:
+    git: git://github.com/IOT-DSA/sdk-dslink-dart.git
+  quiver: "^0.21.4"
+  legit:
+    git: git://github.com/DirectMyFile/legit.git
+  http: "^0.11.3"
+  github:
+    git: git://github.com/DirectMyFile/github.dart.git
+  args: "^0.13.2"
+  console: "^2.2.3"
+  archive: "^1.0.20"
+executables:
+  dsa:
