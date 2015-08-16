@@ -5,10 +5,10 @@ import "package:dslink/utils.dart" show DSLinkJSON;
 import "package:dsa_tool/github.dart";
 import "package:dsa_tool/cfg.dart";
 import "package:dsa_tool/utils.dart";
-import "package:console/console.dart";
-import "package:crypto/crypto.dart";
 import "package:legit/legit.dart";
 import "package:dsa_tool/io.dart";
+import "package:console/console.dart";
+import "package:colorize/colorize.dart";
 
 ArgParser topLevelParser;
 
@@ -142,7 +142,7 @@ handleSetupCommand(ArgResults opts) async {
 
   if ((config["github_username"] == null ||
     config["github_password"] == null) ||
-    await new Prompter("You have already logged into GitHub. Would you like to do it again?").ask()) {
+    await new Prompter("You have already logged into GitHub. Would you like to do it again? ").ask()) {
     var username = await new Prompter("GitHub Username: ").prompt();
     var password = await new Prompter("GitHub Password: ", secret: true).prompt();
     print("");

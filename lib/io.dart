@@ -445,6 +445,74 @@ Future<dynamic> fetchJSON(String url) async {
   return JSON.decode(response.body);
 }
 
+download(String url, String path, {String message: "Downloading {file.name}"}) async {
+  var file = new File(path);
+  var parent = file.parent;
+  if (!(await parent.exists())) {
+    await parent.create(recursive: true);
+  }
+
+  var name = file.path.split("/").last;
+
+  message = message.replaceAll("{file.name}", name);
+
+  var uri = Uri.parse(url);
+  HttpClient client = new HttpClient();
+  var request = await client.getUrl(uri);
+  var response = await request.close();
+  if (response.statusCode != 200) {
+    client.close(force: true);
+    throw new HttpException("Bad Status Code: ${response.statusCode}", uri: uri);
+  }
+
+  var progress = 0;
+  var r = file.openWrite();
+  var last = "";
+  stdout.write("${message}: ");
+  await response.listen((data) {
+    progress += data.length;
+    r.add(data);
+    stdout.write("\b" * last.length);
+    var percent = ((progress / response.contentLength) * 100).clamp(0, 100);
+    last = "${percent.toStringAsFixed(2)}%";
+    stdout.write(last);
+  }).asFuture();
+  await r.close();
+  stdout.writeln();
+  client.close(force: true);
+}
+
+Future<List<int>> fetchBytes(String url, {String message: "Downloading {file.name}"}) async {
+  var uri = Uri.parse(url);
+
+  var name = uri.pathSegments.last;
+  message = message.replaceAll("{file.name}", name);
+
+  HttpClient client = new HttpClient();
+  var request = await client.getUrl(uri);
+  var response = await request.close();
+  if (response.statusCode != 200) {
+    client.close(force: true);
+    throw new HttpException("Bad Status Code: ${response.statusCode}", uri: uri);
+  }
+
+  var progress = 0;
+  var last = "";
+  var bytes = [];
+  stdout.write("${message}: ");
+  await response.listen((data) {
+    progress += data.length;
+    bytes.addAll(data);
+    stdout.write("\b" * last.length);
+    var percent = ((progress / response.contentLength) * 100).clamp(0, 100);
+    last = "${percent.toStringAsFixed(2)}%";
+    stdout.write(last);
+  }).asFuture();
+  stdout.writeln();
+  client.close(force: true);
+  return bytes;
+}
+
 Future<List<int>> fetchUrl(String url) async {
   http.Response response = await _http.get(url);
   if (response.statusCode != 200) {

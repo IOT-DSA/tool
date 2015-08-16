@@ -11,6 +11,7 @@ dependencies:
     git: git://github.com/DirectMyFile/github.dart.git
   args: "^0.13.2"
   console: "^2.2.3"
+  colorize: "^0.1.2"
   archive: "^1.0.20"
 executables:
   dsa:
