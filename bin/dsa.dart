@@ -7,6 +7,7 @@ import "package:dsa_tool/cfg.dart";
 import "package:dsa_tool/utils.dart";
 import "package:legit/legit.dart";
 import "package:dsa_tool/io.dart";
+import "package:dsa_tool/tasks.dart";
 import "package:console/console.dart";
 import "package:colorize/colorize.dart";
 
@@ -53,6 +54,7 @@ main(List<String> args) async {
   argp.addCommand("setup", createSetupParser());
   argp.addCommand("get-dist", createGetDistParser());
   argp.addCommand("get", createGetParser());
+  argp.addCommand("batch", createBatchParser());
   var opts = argp.parse(args);
 
   if (opts.command == null) {
@@ -67,6 +69,8 @@ main(List<String> args) async {
     await handleGetDistCommand(opts.command);
   } else if (opts.command.name == "get") {
     await handleGetCommand(opts.command);
+  } else if (opts.command.name == "batch") {
+    await handleBatchCommand(opts.command);
   } else {
     usage(message: "Unknown Command");
   }
@@ -78,6 +82,19 @@ main(List<String> args) async {
 }
 
 bool autoExit = true;
+
+handleBatchCommand(ArgResults opts) async {
+  if (opts.rest.length != 1) {
+    usage(message: "Task file not specified", command: "batch");
+  }
+
+  var file = new File(opts.rest[0]);
+  if (!(await file.exists())) {
+    print("ERROR: ${file.path} does not exist.");
+    exit(1);
+  }
+  await executeBatchFile(file.path);
+}
 
 handleGetDistCommand(ArgResults opts) async {
   if (opts.rest.length < 1) {
@@ -244,3 +261,9 @@ ArgParser createListLinkParser() {
   var argp = new ArgParser(allowTrailingOptions: true);
   return argp;
 }
+
+ArgParser createBatchParser() {
+  var argp = new ArgParser(allowTrailingOptions: true);
+  return argp;
+}
+

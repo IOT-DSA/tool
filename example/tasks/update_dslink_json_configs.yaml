@@ -1,0 +1,11 @@
+filters:
+- where: link.type
+  is: java
+- where: file.exists
+  file: dslink.json
+execute:
+- merge:
+    configs:
+      token:
+        type: string
+  in: dslink.json

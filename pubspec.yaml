@@ -13,5 +13,6 @@ dependencies:
   console: "^2.2.3"
   colorize: "^0.1.2"
   archive: "^1.0.20"
+  yaml: "^2.1.7"
 executables:
   dsa:
