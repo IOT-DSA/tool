@@ -7,6 +7,8 @@ import "dart:io";
 import "package:path/path.dart" as pathlib;
 import "package:yaml/yaml.dart" show loadYaml;
 
+import "utils.dart";
+
 class TaskSubject {
   final Directory directory;
 
@@ -127,7 +129,6 @@ class TaskEvaluator {
 }
 
 class RegexReplaceTaskDefinition extends TaskDefinition {
-
   @override
   Future<bool> claim(EntityConfiguration config) async {
     return config.get("replace") == "regex" && config.has("regex");
@@ -154,6 +155,26 @@ class RegexReplaceTaskDefinition extends TaskDefinition {
       content = content.replaceAll(orig, out);
     }
     await file.writeAsString(content);
+  }
+}
+
+class MergeJsonTaskDefinition extends TaskDefinition {
+  @override
+  Future<bool> claim(EntityConfiguration config) async {
+    return config.has("merge");
+  }
+
+  @override
+  Future execute(TaskSubject subject, EntityConfiguration config) async {
+    String inPath = config.get("in");
+    File file = subject.getFile(inPath);
+    var content = await file.readAsString();
+    var json = JSON.decode(content);
+    json = merge(json, config.get("merge"));
+    await file.writeAsString(
+        const JsonEncoder.withIndent("  ").convert(json) +
+        "\n"
+    );
   }
 }
 
@@ -210,7 +231,10 @@ executeBatchFile(String path) async {
   var tconfigs = taskConfigurations.map((x) => new MapEntityConfiguration(x)).toList();
   subjects = await filterEvaluator.evaluate(fconfigs, subjects);
 
-  var evaluator = new TaskEvaluator([new RegexReplaceTaskDefinition()]);
+  var evaluator = new TaskEvaluator([
+    new RegexReplaceTaskDefinition(),
+    new MergeJsonTaskDefinition()
+  ]);
   for (var subject in subjects) {
     await evaluator.run(subject, tconfigs);
   }

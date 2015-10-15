@@ -14,5 +14,6 @@ dependencies:
   colorize: "^0.1.2"
   archive: "^1.0.20"
   yaml: "^2.1.7"
+  petitparser: "^1.5.0"
 executables:
   dsa:

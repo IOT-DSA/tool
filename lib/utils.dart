@@ -19,3 +19,51 @@ String decodeBase64(String input) {
 Future<Map<String, dynamic>> fetchDistributionData() async {
   return await fetchJSON("https://raw.githubusercontent.com/IOT-DSA/dists/gh-pages/dists.json");
 }
+
+Map merge(Map a, Map b, {bool uniqueCollections: true, bool allowDirectives: false}) {
+  var out = {};
+  for (var key in a.keys) {
+    var value = a[key];
+
+    if (allowDirectives) {
+      if (b.containsKey("!remove")) {
+        var rm = b["!remove"];
+        if (rm is String && rm == key) {
+          continue;
+        } else if (rm is List && rm.contains(key)) {
+          continue;
+        }
+      } else if (value is List && b.containsKey("${key}!remove")) {
+        b["${key}!remove"].forEach((a) => value.removeWhere((x) => x == a));
+      }
+    }
+
+    if (b.containsKey(key)) {
+      var bval = b[key];
+
+      if (value is Map && bval is Map) {
+        value = merge(value, bval, uniqueCollections: uniqueCollections, allowDirectives: allowDirectives);
+      } else if (value is List && bval is List) {
+        var tmp = uniqueCollections ? new Set() : [];
+        tmp.addAll(value);
+        tmp.addAll(bval);
+
+        value = tmp.toList();
+      }
+    }
+    out[key] = value;
+  }
+
+  for (var key in b.keys) {
+    var value = b[key];
+
+    if (allowDirectives && key is String && key.endsWith("!remove"))
+      continue;
+
+    if (!a.containsKey(key)) {
+      out[key] = value;
+    }
+  }
+
+  return out;
+}

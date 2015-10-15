@@ -1,6 +1,6 @@
 filters:
 - where: link.type
-  is: java
+  is: dart
 - where: file.exists
   file: dslink.json
 execute:
