@@ -20,6 +20,17 @@ Future<Map<String, dynamic>> fetchDistributionData() async {
   return await fetchJSON("https://raw.githubusercontent.com/IOT-DSA/dists/gh-pages/dists.json");
 }
 
+String getLinkType(String name) {
+  if (!name.contains("-") || !name.startsWith("dslink-")) return "unknown";
+  var parts = name.split("-");
+
+  if (parts.length == 2) {
+    return "unknown";
+  }
+
+  return parts[1];
+}
+
 Map merge(Map a, Map b, {bool uniqueCollections: true, bool allowDirectives: false}) {
   var out = {};
   for (var key in a.keys) {

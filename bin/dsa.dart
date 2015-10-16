@@ -1,3 +1,5 @@
+import "dart:async";
+import "dart:convert";
 import "dart:io";
 
 import "package:args/args.dart";
@@ -83,7 +85,7 @@ main(List<String> args) async {
 
 bool autoExit = true;
 
-handleBatchCommand(ArgResults opts) async {
+handleBatchRunCommand(ArgResults opts) async {
   if (opts.rest.length != 1) {
     usage(message: "Task file not specified", command: "batch");
   }
@@ -201,19 +203,35 @@ loginToGitHub() async {
   }
 }
 
+handleBatchCommand(ArgResults opts) async {
+  if (opts.command == null) {
+    usage(command: "batch");
+  }
+
+  if (opts.command.name == "run") {
+    await handleBatchRunCommand(opts.command);
+  }
+}
+
 handleLinkCommand(ArgResults opts) async {
   if (opts.command == null) {
     usage(command: "link");
   }
 
   if (opts.command.name == "list") {
-    await handleLinkListCommand(opts);
+    await handleLinkListCommand(opts.command);
   }
 }
 
 handleLinkListCommand(ArgResults opts) async {
   await loginToGitHub();
+
+  var format = opts["format"];
+  var typeFilter = opts["type"];
+  var out = [];
+
   await for (Repository repo in listLinkRepositories()) {
+
     try {
       var json = await fetchRepositoryJsonFile(repo, "dslink.json");
       var l = new DSLinkJSON.from(json);
@@ -222,15 +240,42 @@ handleLinkListCommand(ArgResults opts) async {
         continue;
       }
 
-      print("- ${l.name}:");
-      if (repo.description != null && repo.description.isNotEmpty) {
-        print("  Description: ${repo.description}");
+      var type = getLinkType(l.name);
+      if (typeFilter != "any" && typeFilter != type) {
+        continue;
       }
 
-      print("  Url: ${repo.htmlUrl}");
-      print("  Clone Url: ${repo.cloneUrls.https}");
+      if (format == "detailed") {
+        print("- ${l.name}:");
+        if (repo.description != null && repo.description.isNotEmpty) {
+          print("  Description: ${repo.description}");
+        }
+
+        print("  Url: ${repo.htmlUrl}");
+        print("  Clone Url: ${repo.cloneUrls.https}");
+      } else if (format == "simple") {
+        print(l.name);
+      } else if (format == "git-clone") {
+        print("git clone ${repo.cloneUrls.https}");
+      } else if (format == "json") {
+        var m = {
+          "name": l.name,
+          "url": repo.htmlUrl,
+          "cloneUrl": repo.cloneUrls.https
+        };
+
+        if (repo.description != null && repo.description.isNotEmpty) {
+          m["description"] = repo.description;
+        }
+
+        out.add(m);
+      }
     } catch (e) {
     }
+  }
+
+  if (format == "json") {
+    print(const JsonEncoder.withIndent("  ").convert(out));
   }
 }
 
@@ -259,11 +304,24 @@ ArgParser createSetupParser() {
 
 ArgParser createListLinkParser() {
   var argp = new ArgParser(allowTrailingOptions: true);
+  argp.addOption("format", abbr: "f", help: "Output Format", allowed: [
+    "detailed",
+    "simple",
+    "json",
+    "git-clone"
+  ], defaultsTo: "detailed");
+
+  argp.addOption("type", abbr: "t", help: "Link Type", defaultsTo: "any");
   return argp;
 }
 
 ArgParser createBatchParser() {
   var argp = new ArgParser(allowTrailingOptions: true);
+  argp.addCommand("run", createBatchRunParser());
   return argp;
 }
 
+ArgParser createBatchRunParser() {
+  var argp = new ArgParser(allowTrailingOptions: true);
+  return argp;
+}

@@ -17,7 +17,9 @@ Stream<Repository> listDsaRepositories() {
 
 Stream<Repository> listLinkRepositories() {
   return listDsaRepositories().where((repo) {
-    var success = repo.name.startsWith("dslink-") && !repo.name.endsWith("-template");
+    var success = repo.name.startsWith("dslink-") &&
+        !repo.name.endsWith("-templat-") &&
+        !repo.name.contains("-template-");
     return success;
   });
 }
