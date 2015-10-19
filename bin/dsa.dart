@@ -12,6 +12,7 @@ import "package:dsa_tool/io.dart";
 import "package:dsa_tool/tasks.dart";
 import "package:console/console.dart";
 import "package:colorize/colorize.dart";
+import "package:dsa_tool/help.dart";
 
 ArgParser topLevelParser;
 
@@ -57,6 +58,7 @@ main(List<String> args) async {
   argp.addCommand("get-dist", createGetDistParser());
   argp.addCommand("get", createGetParser());
   argp.addCommand("batch", createBatchParser());
+  argp.addCommand("help", createHelpParser());
   var opts = argp.parse(args);
 
   if (opts.command == null) {
@@ -73,6 +75,8 @@ main(List<String> args) async {
     await handleGetCommand(opts.command);
   } else if (opts.command.name == "batch") {
     await handleBatchCommand(opts.command);
+  } else if (opts.command.name == "help") {
+    await handleHelpCommand(opts.command);
   } else {
     usage(message: "Unknown Command");
   }
@@ -81,6 +85,10 @@ main(List<String> args) async {
     github.dispose();
     exit(0);
   }
+}
+
+handleHelpCommand(ArgResults opts) async {
+  print(HELP_COMMAND.trim());
 }
 
 bool autoExit = true;
@@ -312,6 +320,11 @@ ArgParser createListLinkParser() {
   ], defaultsTo: "detailed");
 
   argp.addOption("type", abbr: "t", help: "Link Type", defaultsTo: "any");
+  return argp;
+}
+
+ArgParser createHelpParser() {
+  var argp = new ArgParser(allowTrailingOptions: true);
   return argp;
 }
 
