@@ -101,7 +101,8 @@ Future<BetterProcessResult> exec(
   File outputFile,
   Handler<int> exitHandler,
   bool inherit: false,
-  bool writeToBuffer: false
+  bool writeToBuffer: false,
+  bool inheritStdin: false
   }) async {
   IOSink raf;
 
@@ -203,7 +204,7 @@ Future<BetterProcessResult> exec(
         process.stdin.write(stdin);
         await process.stdin.close();
       }
-    } else if (inherit) {
+    } else if (inherit && inheritStdin) {
       _stdin.listen(process.stdin.add, onDone: process.stdin.close);
     }
 

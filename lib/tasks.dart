@@ -8,6 +8,7 @@ import "package:path/path.dart" as pathlib;
 import "package:yaml/yaml.dart" show loadYaml;
 
 import "utils.dart";
+import "io.dart";
 
 class TaskSubject {
   final Directory directory;
@@ -44,18 +45,31 @@ abstract class TaskSubjectPopulator {
 abstract class EntityConfiguration {
   dynamic get(String key);
   bool has(String key);
+
+  void populateVariables(Map<String, dynamic> variables);
 }
 
 class MapEntityConfiguration extends EntityConfiguration {
   final Map<String, dynamic> config;
 
-  MapEntityConfiguration(this.config);
+  Map _cachedConfig;
+
+  MapEntityConfiguration(this.config) {
+    _cachedConfig = new Map.from(config);
+  }
 
   @override
   get(String key) => config[key];
 
   @override
   bool has(String key) => config.containsKey(key);
+
+  @override
+  void populateVariables(Map<String, dynamic> variables) {
+    config.clear();
+    config.addAll(_cachedConfig);
+    crawlDataAndSubstituteVariables(config, variables);
+  }
 }
 
 abstract class TaskFilter {
@@ -122,7 +136,11 @@ class TaskEvaluator {
       }
 
       if (task != null) {
+        c.populateVariables(subject.attributes);
+        var dir = Directory.current;
+        Directory.current = subject.directory;
         await task.execute(subject, c);
+        Directory.current = dir;
       }
     }
   }
@@ -166,7 +184,7 @@ class MergeJsonTaskDefinition extends TaskDefinition {
 
   @override
   Future execute(TaskSubject subject, EntityConfiguration config) async {
-    String inPath = config.get("in");
+    String inPath = config.get("into");
     File file = subject.getFile(inPath);
     var content = await file.readAsString();
     var json = JSON.decode(content);
@@ -175,6 +193,43 @@ class MergeJsonTaskDefinition extends TaskDefinition {
         const JsonEncoder.withIndent("  ").convert(json) +
         "\n"
     );
+  }
+}
+
+class ExecuteTaskDefinition extends TaskDefinition {
+  @override
+  Future<bool> claim(EntityConfiguration config) async {
+    return config.has("execute");
+  }
+
+  @override
+  Future execute(TaskSubject subject, EntityConfiguration config) async {
+    var cmd = config.get("execute");
+    if (cmd is List) {
+      cmd = cmd.join(" ");
+    }
+    var exe = Platform.isWindows ? "cmd.exe" : "bash";
+    var args = [Platform.isWindows ? "/C" : "-c", cmd];
+
+    var env = {};
+
+    if (config.has("env")) {
+      var e = config.get("env");
+      if (e is List) {
+        for (String x in e) {
+          var p = x.split("=");
+          var k = p[0];
+          var v = p.skip(1).join("=");
+          env[k] = v;
+        }
+      } else {
+        env = e;
+      }
+    }
+
+    var inheritStdin = config.get("stdin") == true;
+
+    await exec(exe, args: args, inherit: true, inheritStdin: inheritStdin, environment: env);
   }
 }
 
@@ -205,10 +260,14 @@ class DSLinkTaskSubjectPopulator extends TaskSubjectPopulator {
 executeBatchFile(String path) async {
   var file = new File(path);
   var content = await file.readAsString();
-  var json = loadYaml(content);
+  var json = deepCopy(loadYaml(content));
 
   var filterConfigurations = json["filters"];
   var taskConfigurations = json["execute"];
+
+  if (taskConfigurations == null) {
+    taskConfigurations = json["tasks"];
+  }
 
   var dirs = await Directory.current.list().where((x) => x is Directory).toList();
   dirs = dirs.where((x) => new File("${x.path}/dslink.json").existsSync()).toList();
@@ -227,15 +286,37 @@ executeBatchFile(String path) async {
     "file.exists": new FileExistsFilter()
   });
 
-  var fconfigs = filterConfigurations.map((x) => new MapEntityConfiguration(x)).toList();
-  var tconfigs = taskConfigurations.map((x) => new MapEntityConfiguration(x)).toList();
+  List<EntityConfiguration> fconfigs =
+    filterConfigurations.map((x) => new MapEntityConfiguration(x)).toList();
+  List<EntityConfiguration> tconfigs =
+    taskConfigurations.map((x) => new MapEntityConfiguration(x)).toList();
   subjects = await filterEvaluator.evaluate(fconfigs, subjects);
 
   var evaluator = new TaskEvaluator([
     new RegexReplaceTaskDefinition(),
-    new MergeJsonTaskDefinition()
+    new MergeJsonTaskDefinition(),
+    new ExecuteTaskDefinition()
   ]);
+
   for (var subject in subjects) {
     await evaluator.run(subject, tconfigs);
+  }
+}
+
+dynamic deepCopy(input) {
+  if (input is Map) {
+    var out = {};
+    for (var key in input.keys) {
+      out[deepCopy(key)] = deepCopy(input[key]);
+    }
+    return out;
+  } else if (input is List) {
+    var out = [];
+    for (var e in input) {
+      out.add(deepCopy(e));
+    }
+    return out;
+  } else {
+    return input;
   }
 }

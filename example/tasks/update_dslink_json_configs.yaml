@@ -8,4 +8,4 @@ execute:
     configs:
       token:
         type: string
-  in: dslink.json
+  into: dslink.json
