@@ -161,7 +161,7 @@ handleSetupCommand(ArgResults opts) async {
 
   if ((config["github_username"] == null ||
     config["github_password"] == null) ||
-    await new Prompter("You have already logged into GitHub. Would you like to do it again? ").ask()) {
+    await new Prompter("You have already logged into GitHub. Would you like to do it again? (Y/n) ").ask()) {
     var username = await new Prompter("GitHub Username: ").prompt();
     var password = await new Prompter("GitHub Password: ", secret: true).prompt();
     print("");
@@ -169,7 +169,7 @@ handleSetupCommand(ArgResults opts) async {
     github.auth = new Authentication.basic(username, password);
     try {
       var user = await github.users.getCurrentUser();
-      print("Hello, ${user.name}!");
+      print("Hello, ${user.name == null ? user.login : user.name}!");
       config["github_username"] = encodeBase64(username);
       config["github_password"] = encodeBase64(password);
     } catch (e) {
