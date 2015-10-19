@@ -196,6 +196,18 @@ class MergeJsonTaskDefinition extends TaskDefinition {
   }
 }
 
+class SayTaskDefinition extends TaskDefinition {
+  @override
+  Future<bool> claim(EntityConfiguration config) async {
+    return config.has("say");
+  }
+
+  @override
+  Future execute(TaskSubject subject, EntityConfiguration config) async {
+    print(config.get("say"));
+  }
+}
+
 class ExecuteTaskDefinition extends TaskDefinition {
   @override
   Future<bool> claim(EntityConfiguration config) async {
@@ -253,6 +265,8 @@ class DSLinkTaskSubjectPopulator extends TaskSubjectPopulator {
       }
       subject.setAttribute("link.name", name);
       subject.setAttribute("link.type", type);
+      subject.setAttribute("link.description", json["description"]);
+      subject.setAttribute("link.version", json["version"]);
     }
   }
 }
@@ -295,7 +309,8 @@ executeBatchFile(String path) async {
   var evaluator = new TaskEvaluator([
     new RegexReplaceTaskDefinition(),
     new MergeJsonTaskDefinition(),
-    new ExecuteTaskDefinition()
+    new ExecuteTaskDefinition(),
+    new SayTaskDefinition()
   ]);
 
   for (var subject in subjects) {

@@ -4,4 +4,4 @@ filters:
 - where: file.exists
   file: dslink.json
 tasks:
-- execute: ls
+- say: "- ${link.name} (v${link.version})"
