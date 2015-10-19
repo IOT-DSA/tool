@@ -6,10 +6,19 @@ DSA Tool Help:
   Fetch a DSLink:
     dsa get dslink-java-etsdb
 
-  List Java DSLinks:
+  Print a List of All DSLinks:
+    dsa link list
+
+  Print Simple List of DSLinks:
+    dsa link list -f simple
+
+  Print DSLink List as JSON:
+    dsa link list -f json
+
+  Print a List of Java DSLinks:
     dsa link list -t java
 
-  List Dart DSLinks:
+  Print a List of Dart DSLinks:
     dsa link list -t dart
 
   Run a Batch Task File:
