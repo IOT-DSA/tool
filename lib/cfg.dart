@@ -4,7 +4,15 @@ import "dart:async";
 import "dart:io";
 import "dart:convert";
 
-String _cfgFilePath = "${Platform.environment['HOME']}/.dsa/tool/config.json";
+String _cfgFilePath = _getConfigFilePath();
+
+String _getConfigFilePath() {
+  if (Platform.isWindows) {
+    return "${Platform.environment['HOMEPATH']}/DSA/Tool/config.json";
+  } else {
+    return "${Platform.environment['HOME']}/.dsa/tool/config.json";
+  }
+}
 
 Future<Map<String, dynamic>> readConfigFile() async {
   File file = new File(_cfgFilePath);
