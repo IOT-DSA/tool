@@ -16,5 +16,5 @@ DSA Tool Help:
     dsa batch run ~/Tasks/my_task.yaml
 
   Clone all Java DSLinks:
-    dsa link list -t java | bash
+    dsa link list -t java -f git-clone | bash
 """;
