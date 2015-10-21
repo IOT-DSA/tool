@@ -271,13 +271,17 @@ class DSLinkTaskSubjectPopulator extends TaskSubjectPopulator {
   }
 }
 
-executeBatchFile(String path) async {
+executeBatchFile(String path, [Map<String, dynamic> arguments]) async {
   var file = new File(path);
   var content = await file.readAsString();
   var json = deepCopy(loadYaml(content));
 
   var filterConfigurations = json["filters"];
   var taskConfigurations = json["execute"];
+
+  if (filterConfigurations == null) {
+    filterConfigurations = [];
+  }
 
   if (taskConfigurations == null) {
     taskConfigurations = json["tasks"];
@@ -310,11 +314,36 @@ executeBatchFile(String path) async {
     new RegexReplaceTaskDefinition(),
     new MergeJsonTaskDefinition(),
     new ExecuteTaskDefinition(),
-    new SayTaskDefinition()
+    new SayTaskDefinition(),
+    new GitTaskDefinition()
   ]);
 
   for (var subject in subjects) {
     await evaluator.run(subject, tconfigs);
+  }
+}
+
+class GitTaskDefinition extends ExecuteTaskDefinition {
+  @override
+  Future<bool> claim(EntityConfiguration config) async {
+    return config.has("git");
+  }
+
+  @override
+  Future execute(TaskSubject subject, EntityConfiguration config) async {
+    var n = config.get("git");
+
+    if (n is String) {
+      n = n.split(" ");
+    }
+
+    List list = n;
+    list.insert(0, "git");
+    var a = new MapEntityConfiguration({
+      "execute": list
+    });
+
+    await super.execute(subject, a);
   }
 }
 

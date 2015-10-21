@@ -3,7 +3,7 @@ filters:
   is: java
 - where: link.name
   is_not: dslink-java-dont-update
-execute:
+tasks:
 - replace: regex
   regex: "compile \\'org\\.iot-dsa:dslink:(.+)\\'"
   with:

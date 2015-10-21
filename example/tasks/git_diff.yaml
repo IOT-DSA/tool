@@ -1,0 +1,7 @@
+filters:
+- where: link.type
+  is: dart
+- where: file.exists
+  file: dslink.json
+tasks:
+- git: status
