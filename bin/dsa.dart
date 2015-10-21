@@ -13,6 +13,7 @@ import "package:dsa_tool/tasks.dart";
 import "package:console/console.dart";
 import "package:colorize/colorize.dart";
 import "package:dsa_tool/help.dart";
+import "package:dsa_tool/globals.dart";
 
 ArgParser topLevelParser;
 
@@ -64,6 +65,8 @@ main(List<String> args) async {
   if (opts.command == null) {
     usage(message: "No Command Specified");
   }
+
+  config = await readConfigFile();
 
   if (opts.command.name == "link") {
     await handleLinkCommand(opts.command);
@@ -152,9 +155,12 @@ handleGetCommand(ArgResults opts) async {
     await dir.create(recursive: true);
   }
 
+  Repository repo = await listDsaRepositories()
+      .firstWhere((repo) => repo.name == name || repo.fullName == name);
+
   GitClient git = new GitClient(new Directory(target));
   git.quiet = false;
-  var result = await git.clone("https://github.com/IOT-DSA/${name}.git", recursive: true);
+  var result = await git.clone(repo.cloneUrls.https, recursive: true);
 
   if (!result) {
     print("Failed to get ${name}!");
@@ -165,8 +171,6 @@ handleGetCommand(ArgResults opts) async {
 }
 
 handleSetupCommand(ArgResults opts) async {
-  var config = await readConfigFile();
-
   if ((config["github_username"] == null ||
     config["github_password"] == null) ||
     await new Prompter("You have already logged into GitHub. Would you like to do it again? (Y/n) ").ask()) {
@@ -191,8 +195,6 @@ handleSetupCommand(ArgResults opts) async {
 }
 
 loginToGitHub() async {
-  var config = await readConfigFile();
-
   var username = config["github_username"];
   var password = config["github_password"];
 

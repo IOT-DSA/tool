@@ -3,16 +3,22 @@ library dsa.github;
 import "dart:async";
 import "dart:convert";
 
-import "package:github/server.dart";
+import "globals.dart";
 
+import "package:github/server.dart";
 export "package:github/server.dart" show Repository, Authentication;
 
 const String DSA_GITHUB_ORG = "IOT-DSA";
 
 final GitHub github = createGitHubClient();
 
-Stream<Repository> listDsaRepositories() {
-  return github.repositories.listUserRepositories(DSA_GITHUB_ORG);
+Stream<Repository> listDsaRepositories() async* {
+  var users = [DSA_GITHUB_ORG];
+  users.addAll(config["dsa_users"] == null ? [] : config["dsa_users"]);
+
+  for (var user in users) {
+    yield* github.repositories.listUserRepositories(user);
+  }
 }
 
 Stream<Repository> listLinkRepositories() {
