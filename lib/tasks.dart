@@ -94,14 +94,20 @@ class FilterEvaluator {
           var value = subject.getAttribute(where);
           var isEqual = c.get("is");
           var isNotEqual = c.get("is_not");
-          List<dynamic> isIn = c.get("is_in");
 
           if (isEqual != null) {
-            pass = value == isEqual;
-          } else if (isNotEqual != null) {
-            pass = value != isNotEqual;
-          } else if (isIn != null) {
-            pass = isIn.contains(value);
+            if (isEqual is List) {
+              pass = isEqual.contains(value);
+            } else {
+              pass = value == isEqual;
+            }
+          }
+          if (pass && isNotEqual != null) {
+            if (isNotEqual is List) {
+              pass = !isNotEqual.contains(value);
+            } else {
+              pass = value != isNotEqual;
+            }
           }
         }
 
