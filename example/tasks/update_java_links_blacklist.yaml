@@ -1,0 +1,11 @@
+filters:
+- where: link.type
+  is: java
+- where: link.name
+  is_not: dslink-java-dont-update
+tasks:
+- replace: regex
+  regex: "compile \\'org\\.iot-dsa:(.+):(.+)\\'"
+  with:
+    2: 0.12.0
+  in: build.gradle

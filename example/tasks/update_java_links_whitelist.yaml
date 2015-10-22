@@ -1,0 +1,9 @@
+filters:
+- where: link.name
+  is: dslink-java-update-me
+tasks:
+- replace: regex
+  regex: "compile \\'org\\.iot-dsa:(.+):(.+)\\'"
+  with:
+    2: 0.12.0
+  in: build.gradle
