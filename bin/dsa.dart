@@ -1,4 +1,3 @@
-import "dart:async";
 import "dart:convert";
 import "dart:io";
 
@@ -11,7 +10,6 @@ import "package:legit/legit.dart";
 import "package:dsa_tool/io.dart";
 import "package:dsa_tool/tasks.dart";
 import "package:console/console.dart";
-import "package:colorize/colorize.dart";
 import "package:dsa_tool/help.dart";
 import "package:dsa_tool/globals.dart";
 
@@ -31,7 +29,6 @@ usage({String message, String command}) {
     }
   } else {
     var p = topLevelParser;
-    ArgParser cmd;
 
     var split = command.split(" ");
     for (var i = 0; i < split.length; i++) {
