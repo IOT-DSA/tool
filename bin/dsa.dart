@@ -155,16 +155,17 @@ handleGetCommand(ArgResults opts) async {
   Repository repo = await listDsaRepositories()
       .firstWhere((repo) => repo.name == name || repo.fullName == name);
 
-  GitClient git = new GitClient(new Directory(target));
-  git.quiet = false;
-  var result = await git.clone(repo.cloneUrls.https, recursive: true);
+  await GitClient.handleConfigure(() async {
+    GitClient git = new GitClient.forDirectory(new Directory(target));
+    var result = await git.clone(repo.cloneUrls.https, recursive: true);
 
-  if (!result) {
-    print("Failed to get ${name}!");
-    exit(1);
-  } else {
-    print("Success.");
-  }
+    if (!result) {
+      print("Failed to get ${name}!");
+      exit(1);
+    } else {
+      print("Success.");
+    }
+  }, inherit: true);
 }
 
 handleSetupCommand(ArgResults opts) async {
